@@ -4,6 +4,7 @@ const express = require("express")
 const crypto = require("crypto")
 const jwt = require("jsonwebtoken")
 const fs = require("fs")
+let exec = require("child_process").exec
 app = express();
 var url = "mongodb://127.0.0.1:27017"
 mongo.connect(url, (err, database)=>{
@@ -137,7 +138,6 @@ mongo.connect(url, (err, database)=>{
                         res.json("The song does not exist and probably the server crashed")
                     }
                     else{
-                        //go to line 140
                         fil = "/home/debabrata/node/music/"+result.name
                         console.log(fil)
                         fs.readFileSync(fil, (err,data)=>{
@@ -191,30 +191,49 @@ mongo.connect(url, (err, database)=>{
             }
         })
 
-//The api stores the name of the song along with your unique json web token id when you add a song to playlist . When you check for your
+ //The api stores the name of the song along with your unique json web token id when you add a song to playlist . When you check for your
 //playlist it fetches the name of the songs and then use the name to get the id of the song from the music database
-//Since declaring global variable in node js is a pain in the ass . The api then stores the id in textfile with the  unique token name
-
+//Since declaring global variable in node js is a pain in the ass . The api then stores the id in textfile with
         app.get("/api/playlist/", (req,res)=>{
             a = req.query.token
-            fileName = "/tmp/"+a+".txt"
+            filname = a+".txt"
+            cmd = "cat "+filname
+            console.log(cmd)
+            fs.writeFile(filname, "", 'utf-8', (err)=>{
+                if(err)
+                {
+                    console.log(err)
+                }
+            })
             try{
                 ver = jwt.verify(a, "fddggdgregergerr")
-                db.collection("playlist").find({}, {token:a}).toArray((err,result)=>{
+                db.collection("playlist").find({token:a}).toArray((err,result)=>{
                     num = result.length
                     let i = 0
                     while(i<num)
                     {
                         song = result[i].name
                         kiba = {name:song}
+                        console.log(kiba)
                         db.collection("music").findOne(kiba, (err,hmm)=>{
-                            console.log(j)
                             j = hmm.id+"\n"
-                            fs.appendFileSync(fileName, j)
+                            j = j.toString()
+                            //console.log(j)
+                            fs.appendFile(filname, j, "utf-8", (err)=>{
+                                if(err){
+                                    console.log(err)
+                                }
+                            })
+                            
+
                         })
                         i=i+1
                     }
-                    
+                    //I tried everything . readFileSync.readFile but nothing works . I am not able to read the file
+                    exec(cmd, (err,stdout,stderr)=>{
+                        console.log(stdout)
+                        res.json(stdout)
+                    })
                 })
             }
             catch(err){
