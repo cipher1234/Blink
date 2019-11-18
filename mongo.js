@@ -7,6 +7,7 @@ const fs = require("fs")
 let exec = require("child_process").exec
 app = express();
 var url = "mongodb://127.0.0.1:27017"
+//var arr = []
 mongo.connect(url, (err, database)=>{
     if(err)
     {
@@ -196,44 +197,36 @@ mongo.connect(url, (err, database)=>{
 //Since declaring global variable in node js is a pain in the ass . The api then stores the id in textfile with
         app.get("/api/playlist/", (req,res)=>{
             a = req.query.token
-            filname = a+".txt"
-            cmd = "cat "+filname
-            console.log(cmd)
-            fs.writeFile(filname, "", 'utf-8', (err)=>{
-                if(err)
-                {
-                    console.log(err)
-                }
-            })
+            fname = "/tmp/"+a+".txt"
+            fs.writeFileSync(fname, "")
             try{
                 ver = jwt.verify(a, "fddggdgregergerr")
                 db.collection("playlist").find({token:a}).toArray((err,result)=>{
                     num = result.length
+                   // console.log(num)
                     let i = 0
+                    let arr = []
                     while(i<num)
                     {
                         song = result[i].name
                         kiba = {name:song}
-                        console.log(kiba)
                         db.collection("music").findOne(kiba, (err,hmm)=>{
                             j = hmm.id+"\n"
-                            j = j.toString()
-                            //console.log(j)
-                            fs.appendFile(filname, j, "utf-8", (err)=>{
-                                if(err){
-                                    console.log(err)
-                                }
-                            })
-                            
-
+                            //j = parseInt(j)
+                            fs.appendFileSync(fname, j)
+                            arr.push(j)
+                            l = arr.length
+                            if(l==num){
+                                a =fs.readFileSync(fname)
+                                a = a.toString()
+                                //console.log(a) 
+                                res.json(a)
+                                
+                            }
+                            console.log(arr)
                         })
                         i=i+1
                     }
-                    //I tried everything . readFileSync.readFile but nothing works . I am not able to read the file
-                    exec(cmd, (err,stdout,stderr)=>{
-                        console.log(stdout)
-                        res.json(stdout)
-                    })
                 })
             }
             catch(err){
