@@ -169,13 +169,13 @@ mongo.connect(url, (err, database)=>{
                 res.json("Dude get the fuck out")
             }
         })
-        app.get("/api/addtoplaylist/:name", (req,res)=>{
+        app.get("/api/addtoplaylist/:name/:number", (req,res)=>{
             a = req.query.token
             try{
                 ver = jwt.verify(a, "fddggdgregergerr")
-                id = req.params.id
+                number = req.params.number
                 name = req.params.name
-                data = {name:name,token:a}
+                data = {name:name,number:number}
                 db.collection("playlist").insertOne(data, (err,result)=>{
                 if(err)
                 {
@@ -195,13 +195,14 @@ mongo.connect(url, (err, database)=>{
  //The api stores the name of the song along with your unique json web token id when you add a song to playlist . When you check for your
 //playlist it fetches the name of the songs and then use the name to get the id of the song from the music database
 //Since declaring global variable in node js is a pain in the ass . The api then stores the id in textfile with
-        app.get("/api/playlist/", (req,res)=>{
+        app.get("/api/playlist/:number", (req,res)=>{
             a = req.query.token
+            name = req.params.number
             fname = "/tmp/"+a+".txt"
             fs.writeFileSync(fname, "")
             try{
                 ver = jwt.verify(a, "fddggdgregergerr")
-                db.collection("playlist").find({token:a}).toArray((err,result)=>{
+                db.collection("playlist").find({number:name}).toArray((err,result)=>{
                     num = result.length
                    // console.log(num)
                     let i = 0
@@ -220,13 +221,26 @@ mongo.connect(url, (err, database)=>{
                                 a =fs.readFileSync(fname)
                                 a = a.toString()
                                 //console.log(a) 
-                                res.json(a)
+                                res.send(a)
                                 
                             }
                             console.log(arr)
                         })
                         i=i+1
                     }
+                })
+            }
+            catch(err){
+                res.json("Dude get the fuck out")
+            }
+        })
+        app.get("/api/getnumofsongs", (req,res)=>{
+            a = req.query.token
+            try{
+                ver = jwt.verify(a, "fddggdgregergerr")
+                db.collection("music").find().toArray((err,result)=>{
+                    len = result.length
+                    res.json(len)
                 })
             }
             catch(err){
